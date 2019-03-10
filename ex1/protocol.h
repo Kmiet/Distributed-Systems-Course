@@ -3,8 +3,8 @@
 #include "queue.h"
 
 // Multicast
-#define MULTICAST_ADDR "224.0.0.1"
-#define MULTICAST_PORT 5001
+#define MULTICAST_ADDR "224.3.2.1"
+#define MULTICAST_PORT 12345
 
 // Client
 #define CLIENT_NAME_LEN 16

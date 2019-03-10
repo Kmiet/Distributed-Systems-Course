@@ -207,11 +207,14 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  if(mode == SOCK_STREAM) {
-    if(inet_pton(AF_INET, host, &out_address.sin_addr)==0){
-      printf("Wrong host address \r\n");
-      exit(1);
-    }
+  if(inet_pton(AF_INET, host, &out_address.sin_addr)==0){
+    printf("Wrong host address \r\n");
+    exit(1);
+  }
+
+  if(inet_pton(AF_INET, MULTICAST_ADDR, &logger_address.sin_addr)==0){
+    printf("Wrong mcast address \r\n");
+    exit(1);
   }
 
   tkn = malloc(sizeof(token));

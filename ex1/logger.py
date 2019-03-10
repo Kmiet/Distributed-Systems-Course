@@ -3,8 +3,8 @@ from ctypes import *
 import struct
 
 PACKET_SIZE = 68
-MULT_IP = '224.0.0.1'
-MULT_PORT = 5001
+MULT_IP = '224.3.2.1'
+MULT_PORT = 12345
 
 class MsgStruct(Structure):
   _fields_ = [
@@ -28,11 +28,11 @@ class PacketStruct(Structure):
 
 if __name__ == '__main__':
   sock = socket(AF_INET, SOCK_DGRAM) #, IPPROTO_UDP)
-  #sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+  sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
   sock.bind(('', MULT_PORT))
-  #group = inet_aton(MULT_IP)
-  #mreq = struct.pack('4sL', group, INADDR_ANY)
-  #sock.setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP, mreq)
+  group = inet_aton(MULT_IP)
+  mreq = struct.pack('4sL', group, INADDR_ANY)
+  sock.setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP, mreq)
 
   while True:
     packet, addr = sock.recvfrom(PACKET_SIZE)
