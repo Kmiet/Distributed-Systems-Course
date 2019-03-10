@@ -12,6 +12,7 @@
 #include "queue.h"
 
 pthread_mutex_t input_mutex;
+pthread_mutex_t forward_mutex;
 pthread_mutex_t token_mutex;
 
 pthread_t inet_in_thread;
@@ -26,6 +27,9 @@ int out_socket;
 struct sockaddr_in in_address;
 int in_port;
 int in_socket;
+
+struct sockaddr_in logger_address;
+int logger_socket;
 
 int mode;
 
@@ -49,25 +53,31 @@ void* inet_in_handler(void* args) {
   int bytes_read;
   
   packet p;
+  msg tokenPass;
+  strcpy(tokenPass.author, username);
   
   while(1) {
     //bytes_read = recv(in_fd, buffer, MSG_LENGTH, MSG_WAITALL);
     bytes_read = recvfrom(in_fd, &p, PACKET_SIZE, 0, NULL, NULL);
-    //bytes_read = recvfrom(in_fd, &p, PACKET_SIZE, MSG_WAITALL, (struct sockaddr *) &peer_addr, &peer_addr_len);
+    //bytes_read = recvfrom(in_fd, &p, PACKET_SIZE, 0, (struct sockaddr *) &peer_addr, &peer_addr_len);
     if(bytes_read > 0) {
-      printf("RECV \r\n");
       if(p.type == PCK_TOKEN_MSG) {
         if(strcmp(p.token.msg.author, username) != 0) {
           msg *m = malloc(sizeof(msg));
           strcpy(m->author, p.token.msg.author);
           strcpy(m->content, p.token.msg.content);
+          pthread_mutex_lock(&forward_mutex);
           enque(forwardQue, m);
+          pthread_mutex_unlock(&forward_mutex);
           printf("%s: %s", m->author, m->content);
         }
       } else if (p.type == PCK_TOKEN_PASS) {
         pthread_mutex_lock(&token_mutex);
         strcpy(tkn->id, p.token.id);
+        p.type = PCK_TOKEN_ACQ;
+        p.token.msg = tokenPass;
         hasToken = 1;
+        sendto(logger_socket, &p, PACKET_SIZE, 0, (const struct sockaddr *) &logger_address, sizeof(logger_address));
         pthread_mutex_unlock(&token_mutex);
       }
     }
@@ -96,30 +106,35 @@ void* inet_out_handler(void* args) {
     p->type = PCK_TOKEN_MSG;
     begin = clock();
     while(hasToken == 1) {
+      pthread_mutex_lock(&forward_mutex);
       while(emptyQue(forwardQue) != 0) {
         msg* m = (msg *) deque(forwardQue);
+        pthread_mutex_unlock(&forward_mutex);
         tkn->msg = *m;
         p->token = *tkn;
         sendto(out_socket, p, PACKET_SIZE, 0, (const struct sockaddr *) &out_address, out_addr_len);
         free(m);
+        pthread_mutex_lock(&forward_mutex);
       }
+      pthread_mutex_unlock(&forward_mutex);
+      pthread_mutex_lock(&input_mutex);
       while(emptyQue(inputQue) != 0) {
-        pthread_mutex_lock(&input_mutex);
         msg* m = (msg *) deque(inputQue);
         pthread_mutex_unlock(&input_mutex);
         tkn->msg = *m;
         p->token = *tkn;
         sendto(out_socket, p, PACKET_SIZE, 0, (const struct sockaddr *) &out_address, out_addr_len);
-        printf("Me: %d", sizeof(p));
         free(m);
+        pthread_mutex_lock(&input_mutex);
       }
+      pthread_mutex_unlock(&input_mutex);
       end = clock();
       token_time = (end - begin) / CLOCKS_PER_SEC;
       if(token_time > TOKEN_LEASE_TIME) {
         hasToken = 0;
         p->type = PCK_TOKEN_PASS;
+        p->token = *tkn;
         int x = sendto(out_socket, p, PACKET_SIZE, 0, (const struct sockaddr *) &out_address, out_addr_len);
-        printf("tk: %d", x);
       }
     }
     pthread_mutex_unlock(&token_mutex);
@@ -135,21 +150,12 @@ void* input_handler(void* args) {
   while(1) {
     bytes_read = getline(&buffer, &buffer_size, stdin);
     if(bytes_read != 0 && bytes_read < MSG_LENGTH) {
-      /**/
       msg *m = malloc(sizeof(msg));
       strcpy(m->author, username);
       strcpy(m->content, buffer);
       pthread_mutex_lock(&input_mutex);
       enque(inputQue, m);
       pthread_mutex_unlock(&input_mutex);
-      /*
-      int x = sendto(out_socket, buffer, bytes_read, 0, (const struct sockaddr *) &out_address, out_addr_len);
-      if(x == -1) {
-        printf("Nothing sent\r\n");
-        exit(1);
-      }
-      printf("X: %d", x);
-      */
     }
   }
 }
@@ -160,6 +166,7 @@ void exit_handler() {
   close(in_socket);
   pthread_mutex_destroy(&token_mutex);
   pthread_mutex_destroy(&input_mutex);
+  pthread_mutex_destroy(&forward_mutex);
   free(inputQue);
   free(forwardQue);
 }
@@ -186,6 +193,10 @@ int main(int argc, char** argv) {
   out_address.sin_family = AF_INET; 
   out_address.sin_port = htons(out_port);
   out_address.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  logger_address.sin_family = AF_INET; 
+  logger_address.sin_port = htons(MULTICAST_PORT);
+  logger_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
   if(strcmp(argv[5], "TCP") == 0 || strcmp(argv[5], "tcp") == 0) {
     mode = SOCK_STREAM;
@@ -238,11 +249,18 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
+  logger_socket = socket(AF_INET, SOCK_DGRAM, 0);
+  if(logger_socket == -1) {
+    printf("Could not create logger_socket \r\n");
+    exit(1);
+  }
+
   forwardQue = initQue();
   inputQue = initQue();
 
   pthread_mutex_init(&input_mutex, NULL);
   pthread_mutex_init(&token_mutex, NULL);
+  pthread_mutex_init(&forward_mutex, NULL);
 
   pthread_create(&inet_in_thread, NULL, inet_in_handler, NULL);
   pthread_create(&inet_out_thread, NULL, inet_out_handler, NULL);

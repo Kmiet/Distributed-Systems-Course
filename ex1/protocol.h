@@ -4,6 +4,7 @@
 
 // Multicast
 #define MULTICAST_ADDR "224.0.0.1"
+#define MULTICAST_PORT 5001
 
 // Client
 #define CLIENT_NAME_LEN 16
@@ -26,7 +27,7 @@ typedef struct msg {
 
 // Token
 #define TOKEN_LENGTH 16
-#define TOKEN_LEASE_TIME 1
+#define TOKEN_LEASE_TIME 2
 
 typedef struct token {
   char id[TOKEN_LENGTH];
@@ -38,6 +39,7 @@ typedef struct token {
 #define PCK_CONNECT 0x01
 #define PCK_TOKEN_PASS 0x02
 #define PCK_TOKEN_MSG 0x03
+#define PCK_TOKEN_ACQ 0x04
 
 #define PACKET_SIZE 68
 

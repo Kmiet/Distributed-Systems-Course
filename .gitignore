@@ -1,2 +1,8 @@
 # helpers
 /helpers/
+
+# object files
+*.o
+
+# executables
+*.exe
