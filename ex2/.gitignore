@@ -1,0 +1,8 @@
+# Binary files
+/out/
+
+# Libraries - JGroups
+/lib/
+
+# Intellij .idea
+/.idea/
