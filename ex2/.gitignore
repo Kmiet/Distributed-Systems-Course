@@ -6,3 +6,6 @@
 
 # Intellij .idea
 /.idea/
+
+# Priv
+.me
