@@ -2,7 +2,14 @@ package pl.edu.agh.jgroups;
 
 import org.jgroups.JChannel;
 
+import org.jgroups.protocols.*;
+import org.jgroups.protocols.pbcast.GMS;
+import org.jgroups.protocols.pbcast.NAKACK2;
+import org.jgroups.protocols.pbcast.STABLE;
+import org.jgroups.stack.ProtocolStack;
 import  pl.edu.agh.jgroups.hashmap.*;
+
+import java.net.InetAddress;
 
 public class App {
 
@@ -29,6 +36,27 @@ public class App {
     }
 
     private void initChannelSettings() throws Exception {
+        /*
+        ProtocolStack stack = new ProtocolStack();
+        stack.addProtocol(new UDP().setValue("mcast_group_addr", InetAddress.getByName("230.100.200.x")))
+                .addProtocol(new PING())
+                .addProtocol(new MERGE3())
+                .addProtocol(new FD_SOCK())
+                .addProtocol(new FD_ALL()
+                        .setValue("timeout", 12000)
+                        .setValue("interval", 3000))
+                .addProtocol(new VERIFY_SUSPECT())
+                .addProtocol(new BARRIER())
+                .addProtocol(new NAKACK2())
+                .addProtocol(new UNICAST3())
+                .addProtocol(new STABLE())
+                .addProtocol(new GMS())
+                .addProtocol(new UFC())
+                .addProtocol(new MFC())
+                .addProtocol(new FRAG2());
+        stack.init();
+        stack.setChannel(channel);
+        */
         channel.setReceiver(receiver);
     }
 
@@ -39,7 +67,6 @@ public class App {
             e.printStackTrace();
         }
         System.setProperty("java.net.preferIPv4Stack","true");
-        // new UDP().setValue("mcast_group_addr", InetAddress.getByName("230.100.200.x"))
 
         Thread transmitThread = new Thread(new Transmitter(channel));
         transmitThread.start();
