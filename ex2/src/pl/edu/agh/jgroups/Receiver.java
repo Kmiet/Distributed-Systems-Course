@@ -25,7 +25,7 @@ public class Receiver extends ReceiverAdapter {
 
     @Override
     public void receive(Message msg) {
-        InternalMessage inMsg = msg.getObject();
+        InternalMessage inMsg = (InternalMessage) msg.getObject();
         switch (inMsg.type) {
             case PUT:
                 handlePutMessage(inMsg);
