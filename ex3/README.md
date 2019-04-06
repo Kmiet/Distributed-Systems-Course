@@ -1,0 +1,1 @@
+# RabbitMQ - Hospital Management System

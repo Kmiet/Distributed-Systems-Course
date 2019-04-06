@@ -1,0 +1,11 @@
+# Binary files
+/out/
+
+# Libraries - AMQP Client
+/lib/
+
+# Intellij .idea
+/.idea/
+
+# Priv
+.me

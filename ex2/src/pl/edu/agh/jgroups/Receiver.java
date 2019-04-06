@@ -60,13 +60,12 @@ public class Receiver extends ReceiverAdapter {
 
     @Override
     public void viewAccepted(View view) {
-
-        if(!(view instanceof MergeView)) return;
-
-        try {
-            channel.getState(null, 0);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if(view instanceof MergeView) {
+            try {
+                channel.getState(null, 0);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
