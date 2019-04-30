@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package currency_tracker;
+
+service CurrencyTracker {
+  rpc subscribe (Subscribtion) returns (stream CurrencyData);
+  rpc unsubscribe (Cancelation) returns (Empty);
+}
+
+message Empty {
+
+}
+
+message Cancelation {
+  required string bankName = 1;
+}
+
+message CurrencyData {
+  required CurrencyName currency = 1;
+  // Ratio to PLN currency
+  required double exchange_ratio = 2;
+}
+
+message Subscribtion {
+  required string bankName = 1;
+  repeated CurrencyName currencies = 2;
+}
+
+enum CurrencyName {
+  AUD = 0;
+  CHF = 1;
+  EUR = 2;
+  GBP = 3;
+  USD = 4;
+}
