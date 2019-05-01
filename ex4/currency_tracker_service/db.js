@@ -1,9 +1,9 @@
 const initialData = {
-  AUD: 1,
-  CHF: 2,
-  EUR: 3,
-  GBP: 4,
-  USD: 5
+  AUD: 1.0,
+  CHF: 2.0,
+  EUR: 3.0,
+  GBP: 4.0,
+  USD: 5.0
 }
 
 const db = {
@@ -23,8 +23,8 @@ const db = {
 function init() {
   Object.entries(initialData).forEach(currencyData => {
     let [key, val] = currencyData
-    insert("currencies", key, val)
-    insert("currency_subscribers", key, [])
+    db["currencies"][key] = val
+    db["currency_subscribers"][key] = []
     setTimeout(() => _updateCurrency(key), 10000)
   })
 }
@@ -42,18 +42,18 @@ function getRatio(key) {
 
 function removeSubscriber(name) {
   let stream;
-  currencies = db["subscribers"][key]
+  currencies = db["subscribers"][name]
   currencies.forEach(currency => {
     stream = db["currency_subscribers"][currency][name]
     delete db["currency_subscribers"][currency][name]
   })
-  delete db["subscribers"][key]
+  delete db["subscribers"][name]
   return stream
 }
 
 function _randMult() {
-  let diff = Math.random() / 20
-  if(Math.random() > 0.5) return 1 + diff
+  let diff = Math.random() / 16
+  if(Math.random() < 0.5) return 1 + diff
   else return 1 - diff
 }
 
@@ -63,7 +63,7 @@ function _randTime() {
 
 function _updateCurrency(key) {
   let new_ratio = db["currencies"][key] * _randMult()
-  insert("currencies", key, new_ratio)
+  db["currencies"][key] = new_ratio
   Object.values(db["currency_subscribers"][key]).forEach(stream => {
     stream.write({
       currency: key,
