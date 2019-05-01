@@ -13,6 +13,13 @@ class CurrencyTracker():
     self.name = name
     self.currencies = currencies
     self.current_ratio = dict()
+    self.current_ratio['PLN'] = 1
+
+  def get_currencies(self):
+    return self.currencies
+
+  def get_exchange_ratio(self, currency):
+    return self.current_ratio[currency]
 
   def subscribe(self):
     sub_thread = Thread(target=self._receive_uptades)
