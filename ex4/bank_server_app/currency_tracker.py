@@ -19,6 +19,7 @@ class CurrencyTracker():
     return self.currencies
 
   def get_exchange_ratio(self, currency):
+    print(self.current_ratio)
     return self.current_ratio[currency]
 
   def subscribe(self):
@@ -30,10 +31,25 @@ class CurrencyTracker():
     cancelation = currency_tracker_pb2.Cancelation(bankName=self.name)
     self.stub.unsubscribe(cancelation)
 
+  def _get_currency_string(self, enum):
+    if enum == 0:
+      return 'AUD'
+    elif enum == 1:
+      return 'CHF'
+    elif enum == 2:
+      return 'EUR'
+    elif enum == 3:
+      return 'GBP'
+    elif enum == 4:
+      return 'USD'
+    else:
+      return enum
+
   def _receive_uptades(self):
     subscription = currency_tracker_pb2.Subscription(
       bankName=self.name,
       currencies=self.currencies
     )
     for currency_data in self.stub.subscribe(subscription):
-      self.current_ratio[currency_data.currency] = currency_data.exchange_ratio
+      curr = self. _get_currency_string(currency_data.currency)
+      self.current_ratio[curr] = currency_data.exchange_ratio

@@ -1,0 +1,10 @@
+{
+  "name": "bank_client_app",
+  "version": "1.0.0",
+  "main": "client.js",
+  "author": "Krzysztof Kmiecik",
+  "license": "MIT",
+  "dependencies": {
+    "ice": "^3.7.2"
+  }
+}

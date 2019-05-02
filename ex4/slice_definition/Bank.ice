@@ -19,26 +19,23 @@ module Bank {
     CHF,
     EUR,
     GBP,
-    PLN,
-    USD
+    USD,
+    PLN
   };
 
-  struct DateTime {
+  struct Date {
 		int year;
 		byte month;
 		byte day;
-		byte dour;
-		byte minute;
-		byte second;
 	};
 
   struct Loan {
-    Currency currency;
+    string currency;
     double amountTaken;
     double amountReturned;
     double interestRate;
-    DateTime takenOn;
-    DateTime dueTo;
+    Date takenOn;
+    Date dueTo;
   };
 
   sequence<Loan> Loans;
@@ -54,7 +51,7 @@ module Bank {
   };
 
   struct UserCredentials {
-    long pesel; // user identifier
+    string pesel; // user identifier
     string password;
   };
 
@@ -70,17 +67,19 @@ module Bank {
     AccountState state;
   };
 
-  struct RegisrationResponse {
+  struct RegistrationResponse {
     string password;
     AccountType accountType;
   };
 
   interface User {
-    RegisrationResponse registerNewAccount(string firstName, string lastName, long pesel, int monthlyDeposit) throws RegistrationError, UserAlreadyExistsError;
+    RegistrationResponse registerNewAccount(string firstName, string lastName, string pesel, int monthlyDeposit) throws RegistrationError, UserAlreadyExistsError;
   };
 
   interface Account {
     AccountState getCurrentState(UserCredentials credentials) throws UnauthorizedError;
-    LoanAmount takeALoan(UserCredentials credentials, Currency currency, double amount, DateTime returnTime) throws UnauthorizedError, LoanRejectionError;
+    LoanAmount takeALoan(UserCredentials credentials, string currency, double amount, Date returnTime) throws UnauthorizedError, LoanRejectionError;
   };
+
+  interface Client extends Account, User {};
 };

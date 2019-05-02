@@ -20,9 +20,8 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   tracker = CurrencyTracker(args.bank_name, args.currencies)
-  # atexit.register(exit_handler)
+
   user_manager = UserManager()
   account_manager = AccountManager()
   bank_manager = BankManager(user_manager, account_manager, tracker, args.bank_name, args.service_port)
   bank_manager.start()
-  #tracker.subscribe()

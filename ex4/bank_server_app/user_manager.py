@@ -1,5 +1,4 @@
 import random, string, Ice
-Ice.loadSlice("../slice_definition/Bank.ice")
 import Bank
 
 PASSWD_LEN = 8
@@ -14,10 +13,12 @@ class UserManager():
     else:
       password = ''.join(random.choices(string.ascii_uppercase + string.digits, k=PASSWD_LEN))
       data['password'] = password
-      self.users[pesel] = user
+      self.users[pesel] = data
       return password
 
   def verify_credentials(self, pesel, password):
-    user = self.users.get(pesel)
-    if user is None or user.credentials.password !== password:
+    if not self.users.__contains__(pesel):
+      raise Bank.UnauthorizedError()
+    user = self.users[pesel]
+    if user is None or user['password'] != password:
       raise Bank.UnauthorizedError()
