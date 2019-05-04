@@ -1,5 +1,7 @@
 from threading import Thread
 import grpc
+import sys
+sys.path.append('./grpc_out')
 import currency_tracker_pb2
 import currency_tracker_pb2_grpc as pb2_grpc
 
@@ -19,7 +21,6 @@ class CurrencyTracker():
     return self.currencies
 
   def get_exchange_ratio(self, currency):
-    print(self.current_ratio)
     return self.current_ratio[currency]
 
   def subscribe(self):

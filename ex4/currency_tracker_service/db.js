@@ -64,6 +64,7 @@ function _randTime() {
 function _updateCurrency(key) {
   let new_ratio = db["currencies"][key] * _randMult()
   db["currencies"][key] = new_ratio
+  console.log(key, new_ratio)
   Object.values(db["currency_subscribers"][key]).forEach(stream => {
     stream.write({
       currency: key,

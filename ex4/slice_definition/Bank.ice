@@ -42,22 +42,22 @@ module Bank {
     string password;
   };
 
+  interface Account {
+    AccountInfo getCurrentState(UserCredentials credentials) throws UnauthorizedError;
+  };
+  
+  interface PremiumAccount extends Account {
+    LoanOffer takeALoan(UserCredentials credentials, string currency, double amount) throws UnauthorizedError, LoanRejectionError;
+  };
+
   struct RegistrationResponse {
     string password;
     AccountType accountType;
     Account* account;
   };
 
-  interface Bank {
+  interface User {
     RegistrationResponse registerNewAccount(string firstName, string lastName, string pesel, int monthlyDeposit) throws RegistrationError, UserAlreadyExistsError;
     Account* login(UserCredentials credentials) throws UnauthorizedError;
-  };
-
-  interface Account {
-    AccountInfo getCurrentState(UserCredentials credentials) throws UnauthorizedError;
-  };
-  
-  interface PremiumAccount extends Account {
-    LoanOffer takeALoan(UserCredentials credentials, enum currency, double amount) throws UnauthorizedError, LoanRejectionError;
   };
 };

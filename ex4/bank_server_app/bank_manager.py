@@ -1,9 +1,10 @@
 from threading import Thread
 import sys, random, Ice
+sys.path.append('./ice_out')
 import Bank
 from account_manager import AccountManager, PremiumAccountManager
 
-class BankManager(Bank.Bank):
+class BankManager(Bank.User):
   def __init__(self, user_manager, tracker, service_name, service_port):
     self.accounts = dict()
     self.user_manager = user_manager
@@ -33,8 +34,8 @@ class BankManager(Bank.Bank):
         firstName, 
         lastName, 
         monthlyDeposit, 
-        self.tracker.get_currencies, 
-        self.tracker.get_exchange_ratio
+        self.currency_tracker.get_currencies, 
+        self.currency_tracker.get_exchange_ratio
       )
     
     self.adapter.add(acc, self.communicator.stringToIdentity(pesel + str(acc_type)))
@@ -47,14 +48,14 @@ class BankManager(Bank.Bank):
     else:
       acc_prx = Bank.PremiumAccountPrx.uncheckedCast(base)
 
-    print('registered ' + str(acc_type) + ' account for pesel ' + pesel)
+    print('Registered ' + str(acc_type) + ' account for pesel ' + pesel)
     return Bank.RegistrationResponse(password=password, accountType=acc_type, account=acc_prx)
 
   def login(self, credentials, current=None):
     creds = Bank.UserCredentials(credentials).pesel
     self.user_manager.verify_credentials(creds.pesel, creds.password)
-    acc_type = self.accounts[pesel]._get_type()
-    base = current.adapter.createProxy(Ice.stringToIdentity(pesel + str(acc_type))) 
+    acc_type = self.accounts[creds.pesel]._get_type()
+    base = current.adapter.createProxy(Ice.stringToIdentity(creds.pesel + str(acc_type))) 
     if acc_type == Bank.AccountType.STANDARD:
       return Bank.AccountPrx.uncheckedCast(base)
     else:

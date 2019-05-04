@@ -22,6 +22,5 @@ if __name__ == "__main__":
   tracker = CurrencyTracker(args.bank_name, args.currencies)
 
   user_manager = UserManager()
-  account_manager = AccountManager()
-  bank_manager = BankManager(user_manager, account_manager, tracker, args.bank_name, args.service_port)
+  bank_manager = BankManager(user_manager, tracker, args.bank_name, args.service_port)
   bank_manager.start()

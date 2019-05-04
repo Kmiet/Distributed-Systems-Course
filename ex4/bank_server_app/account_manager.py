@@ -1,6 +1,6 @@
-import random, Ice
+import random, sys, Ice
+sys.path.append('./ice_out')
 import Bank
-import datetime
 
 class AccountManager(Bank.Account):
   
@@ -21,21 +21,26 @@ class AccountManager(Bank.Account):
   def _get_type(self):
     return self.type
 
-  def getCurrentState(self, credentials):
+  def getCurrentState(self, credentials, current=None):
     self._authorize(credentials)
+    print('AccountState: { ' + self.pesel + ', ' + str(self.amount) + ', ' + str(self.type))
     return Bank.AccountInfo(firstName=self.first_name, lastName=self.last_name, amount=self.amount, type=self.type)
 
 
 
 class PremiumAccountManager(AccountManager, Bank.PremiumAccount):
   def __init__(self, pesel, password, first_name, last_name, monthly_deposit, currencies, current_ratio_handler):
-    AccountManager.__init__(pesel, password, first_name, last_name, monthly_deposit)
+    AccountManager.__init__(self, pesel, password, first_name, last_name, monthly_deposit)
     self.type = Bank.AccountType.PREMIUM
+    self.currencies = currencies
+    self.current_ratio_handler = current_ratio_handler
 
-  def takeALoan(self, pesel, currency, amount):
+  def takeALoan(self, pesel, currency, amount, current=None):
     curr = str(currency)
     if curr not in self.currencies():
       raise Bank.LoanRejectionError('Invalid loan currency.')
     elif amount <= 0:
       raise Bank.LoanRejectionError('Invalid loan amount. Must be > 0.')
-    return Bank.LoanOffer(currency=currency, amountInPLN=amount * self.current_ratio_handler(curr), amount=amount)
+    in_pln = amount * self.current_ratio_handler(curr)
+    print('Loan Offer: { ' + self.pesel + ', ' + curr + ', ' + str(amount), ', (PLN) ' + str(in_pln))
+    return Bank.LoanOffer(currency=currency, amountInPLN=in_pln, amount=amount)

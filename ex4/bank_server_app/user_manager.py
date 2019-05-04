@@ -1,4 +1,5 @@
-import random, string, Ice
+import random, string, sys, Ice
+sys.path.append('./ice_out')
 import Bank
 
 PASSWD_LEN = 8
