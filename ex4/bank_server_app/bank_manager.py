@@ -1,46 +1,72 @@
 from threading import Thread
 import sys, random, Ice
 import Bank
+from account_manager import AccountManager, PremiumAccountManager
 
-class BankManager(Bank.Client):
-  def __init__(self, user_manager, account_manager, tracker, service_name, service_port):
-    self.account_manager = account_manager
+class BankManager(Bank.Bank):
+  def __init__(self, user_manager, tracker, service_name, service_port):
+    self.accounts = dict()
     self.user_manager = user_manager
     self.currency_tracker = tracker
     self.service_name = service_name
     self.service_port = service_port
+    self.deposit_breakpoint = random.randint(1000, 3000)
 
   def registerNewAccount(self, firstName, lastName, pesel, monthlyDeposit, current=None):
-    user = dict(pesel=pesel, firstName=firstName, lastName=lastName)
-    password = self.user_manager.add_user(pesel, user)
-    acc_type = self.account_manager.add_account(pesel, monthlyDeposit)
-    return Bank.RegistrationResponse(password=password, accountType=acc_type)
+    password = self.user_manager.add_user(pesel)
+    if monthlyDeposit < 0:
+      raise Bank.RegistrationError(reson='Invalid monthly deposit value. Must be >= 0.')
+    if monthlyDeposit < self.deposit_breakpoint:
+      acc_type = Bank.AccountType.STANDARD
+      acc = AccountManager(
+        pesel, 
+        password, 
+        firstName, 
+        lastName, 
+        monthlyDeposit
+      )
+    else:
+      acc_type = Bank.AccountType.PREMIUM
+      acc = PremiumAccountManager(
+        pesel, 
+        password, 
+        firstName, 
+        lastName, 
+        monthlyDeposit, 
+        self.tracker.get_currencies, 
+        self.tracker.get_exchange_ratio
+      )
+    
+    self.adapter.add(acc, self.communicator.stringToIdentity(pesel + str(acc_type)))
+    self.accounts[pesel] = acc
 
-  def getCurrentState(self, credentials, current=None):
+    base = current.adapter.createProxy(Ice.stringToIdentity(pesel + str(acc_type)))
+
+    if acc_type == Bank.AccountType.STANDARD:
+      acc_prx = Bank.AccountPrx.uncheckedCast(base)
+    else:
+      acc_prx = Bank.PremiumAccountPrx.uncheckedCast(base)
+
+    print('registered ' + str(acc_type) + ' account for pesel ' + pesel)
+    return Bank.RegistrationResponse(password=password, accountType=acc_type, account=acc_prx)
+
+  def login(self, credentials, current=None):
     creds = Bank.UserCredentials(credentials).pesel
     self.user_manager.verify_credentials(creds.pesel, creds.password)
-    state = self.account_manager.get_account_state(creds.pesel)
-    value, loans = state
-    return Bank.AccountState(value=value, loans=loans)
-  
-  def takeALoan(self, credentials, currency, amount, returnDate, current=None):
-    creds = Bank.UserCredentials(credentials).pesel
-    self.user_manager.verify_credentials(creds.pesel, creds.password)
-    curr = str(currency)
-    if curr not in self.currency_tracker.get_currencies():
-      raise Bank.LoanRejectionError('Invalid loan currency')
-    elif amount <= 0:
-      raise Bank.LoanRejectionError('Invalid loan amount. Must be > 0')
-    self.account_manager.take_a_loan(creds.pesel, curr, amount, returnDate)
-    return Bank.LoanAmount(plnAmount=amount * self.currency_tracker.get_exchange_ratio(curr), foreignCurrencyAmount=amount)
+    acc_type = self.accounts[pesel]._get_type()
+    base = current.adapter.createProxy(Ice.stringToIdentity(pesel + str(acc_type))) 
+    if acc_type == Bank.AccountType.STANDARD:
+      return Bank.AccountPrx.uncheckedCast(base)
+    else:
+      return Bank.PremiumAccountPrx.uncheckedCast(base)
 
   def _run(self):
     with Ice.initialize(sys.argv) as communicator:
       adapter = communicator.createObjectAdapterWithEndpoints("BankAdapter", "default -p " + self.service_port)
       adapter.add(self, communicator.stringToIdentity("BankAdapter"))
       adapter.activate()
-
       self.adapter = adapter
+      self.communicator = communicator
       communicator.waitForShutdown()
 
   def start(self):

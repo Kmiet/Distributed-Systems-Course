@@ -21,7 +21,6 @@ const rl = readline.createInterface({
 
     const proxy = communicator.stringToProxy("BankAdapter:default -p " + process.argv[2])
     const ClientI = await Bank.ClientPrx.uncheckedCast(proxy)
-    console.log(new Bank.Currency('USD')._value)
 
     // Cache
 
@@ -69,14 +68,10 @@ const rl = readline.createInterface({
           console.log(new Bank.Currency(curr))
           console.log('Amount: ')
           let amount = await getline()
-          console.log('Return date: ')
-          let rdate = await getline()
-          rdate = toDate(rdate)
           let res = await ClientI.takeALoan(
             getCredentials(user), 
             new Bank.Currency(curr), 
-            amount, 
-            rdate
+            amount
           )
           console.log(res)
         } else if(line == "help") {
@@ -88,7 +83,6 @@ const rl = readline.createInterface({
         console.log(e.toString())
       }
     } while(line != "exit")
-    process.exit(0)
   } catch(e) {
     console.log(e.toString())
     process.exitCode = 1
@@ -101,12 +95,6 @@ const rl = readline.createInterface({
 })()
 
 // Helpers
-
-function toDate(dateString) {
-  tokens = dateString.split('/')
-  if(tokens.length != 3) throw new Error('Invalid date format. Use: dd/mm/yy')
-  return new Bank.Date(parseInt(tokens[2]), parseInt(tokens[1]), parseInt(tokens[0]))
-}
 
 function getCredentials(user) {
   return new Bank.UserCredentials(user.pesel, user.password)

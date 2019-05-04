@@ -2,47 +2,40 @@ import random, Ice
 import Bank
 import datetime
 
-class AccountManager():
+class AccountManager(Bank.Account):
   
-  def __init__(self):
-    self.accounts = dict()
-    self.interest_rate = random.random() / 16
-    self.deposit_breakpoint = random.randint(1000, 3000)
+  def __init__(self, pesel, password, first_name, last_name, monthly_deposit):
+    self.pesel = pesel
+    self.password = password
+    self.first_name = first_name
+    self.last_name = last_name
+    self.amount = random.random() * 10000 + random.randint(3000, 5000)
+    self.monthly_deposit = monthly_deposit
+    self.type = Bank.AccountType.STANDARD
 
-  def add_account(self, pesel, monthlyDeposit):
-    if monthlyDeposit < 0:
-      raise Bank.RegistrationError(reson='Invalid monthly deposit value. Must be >= 0.')
-    acc_type = Bank.AccountType.PREMIUM
-    if monthlyDeposit < self.deposit_breakpoint:
-      acc_type = Bank.AccountType.STANDARD
-    self.accounts[pesel] = ((random.random() * 10000 + 500, []), acc_type) 
-    return acc_type
+  def _authorize(self, credentials):
+    creds = Bank.UserCredentials(credentials).pesel
+    if creds.pesel != self.pesel or creds.password != self.password:
+      raise Bank.UnauthorizedError()
 
-  def get_account_state(self, pesel):
-    acc_state, _acc_type = self.accounts[pesel]
-    return acc_state
+  def _get_type(self):
+    return self.type
 
-  def take_a_loan(self, pesel, currency, amount, returnDate):
-    current_date = self._check_return_date(returnDate)
-    acc_state, acc_type = self.accounts[pesel]
-    if acc_type != Bank.AccountType.PREMIUM:
-      raise Bank.LoanRejectionError('Invalid account type')
-    value, loans = acc_state
-    loans.append(Bank.Loan(
-      currency=currency,
-      amountTaken=amount,
-      amountReturned=0.0,
-      interestRate=self.interest_rate,
-      takenOn=current_date,
-      dueTo=returnDate
-    ))
-    acc_state = (value, loans)
-    self.accounts[pesel] = (acc_state, acc_type)
+  def getCurrentState(self, credentials):
+    self._authorize(credentials)
+    return Bank.AccountInfo(firstName=self.first_name, lastName=self.last_name, amount=self.amount, type=self.type)
 
-  def _check_return_date(self, returnDate):
-    current_date = datetime.date.today()
-    expected_date = datetime.date(current_date.year + 1, current_date.month, current_date.day)
-    return_date = datetime.date(returnDate.year, returnDate.month, returnDate.day)
-    if return_date < expected_date:
-      raise Bank.LoanRejectionError('Invalid returnDate. Must be at least one year from now')
-    return Bank.Date(year=current_date.year, month=current_date.month, day=current_date.day)
+
+
+class PremiumAccountManager(AccountManager, Bank.PremiumAccount):
+  def __init__(self, pesel, password, first_name, last_name, monthly_deposit, currencies, current_ratio_handler):
+    AccountManager.__init__(pesel, password, first_name, last_name, monthly_deposit)
+    self.type = Bank.AccountType.PREMIUM
+
+  def takeALoan(self, pesel, currency, amount):
+    curr = str(currency)
+    if curr not in self.currencies():
+      raise Bank.LoanRejectionError('Invalid loan currency.')
+    elif amount <= 0:
+      raise Bank.LoanRejectionError('Invalid loan amount. Must be > 0.')
+    return Bank.LoanOffer(currency=currency, amountInPLN=amount * self.current_ratio_handler(curr), amount=amount)
