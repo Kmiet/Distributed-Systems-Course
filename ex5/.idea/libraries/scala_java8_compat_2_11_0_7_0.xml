@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="scala-java8-compat_2.11-0.7.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/scala-java8-compat_2.11-0.7.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/scala-library-2.11.11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

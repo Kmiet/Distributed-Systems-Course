@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="akka-stream_2.11-2.5.22">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/akka-stream_2.11-2.5.22.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
