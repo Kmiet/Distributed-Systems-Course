@@ -1,0 +1,11 @@
+{
+  "name": "ZookeeperExample",
+  "version": "0.1.0",
+  "main": "app.js",
+  "author": "Krzysztof Kmiecik",
+  "license": "MIT",
+  "dependencies": {
+    "argparse": "^1.0.10",
+    "node-zookeeper-client": "^0.2.3"
+  }
+}
